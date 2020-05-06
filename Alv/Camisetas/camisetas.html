@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Tablas y DOM</title>
+  <script src='datosCSV.js'></script>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+      font-size: 14px;
+      line-height: 1.428571429;
+      color: #333;
+      background-color: #fff;
+    }
+
+    table {
+      width: 800px;
+      margin: 0 auto;
+    }
+
+    table caption {
+      font-size: 1.5em;
+      font-weight: 700;
+    }
+
+    table  img {
+      display: inline-block;
+      height: auto;
+      width: 100%;
+      padding: 4px;
+      line-height: 1.428571429;
+      background-color: #fff;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+
+    table td {
+      height: auto;
+      width: 25%;
+      padding: 4px;
+      margin-bottom: 20px;
+      line-height: 1.428571429;
+      background-color: #fff;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      text-align: center;
+    }
+
+    table:nth-child(2) td{
+
+      background-color: #428bca;
+    }
+
+    table td div p {
+      position: relative;
+      margin: 0 auto;
+      text-align: center;
+      cursor: default;
+    }
+
+    table td div p:first-of-type {
+      padding: 5px 10px;
+      font-size: 12px;
+      line-height: 1.5;
+      border-radius: 3px;
+      color: #fff;
+      background-color: #428bca;
+      border-color: #357ebd;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.15), 0 1px 1px rgba(0,0,0,0.075);
+    }
+
+  table td div p:first-of-type span {
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    background-color: #ffc107e0;
+    z-index: 5;
+    border: 1px solid #FF5722;
+    padding: .5em;
+    border-radius: 8px;
+    box-shadow: 3px 3px #08080824;
+    color: #333;
+    cursor: default;
+  }
+
+  .desaparece {display: none;}
+
+    table td div p:last-of-type {
+      padding: 9px;
+      border-radius: 3px;
+      min-height: 20px;
+      padding: 19px;
+      background-color: #f5f5f5;
+      border: 1px solid #e3e3e3;
+      border-radius: 4px;
+      box-shadow: inset 0 1px 1px rgba(0,0,0,0.05);
+      font-weight: 500;
+      line-height: 1.1;
+      font-size: 18px;
+    }
+
+    #popup {
+      position: absolute;
+      border: 1px solid #ccc;
+      background-color: #333;
+      padding: 5px;
+      color: #FFF;
+      width: 15em;
+    }
+
+    div {
+      line-height: 3em;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <main>
+  </main>
+  <script>
+
+
+
+    const NUEVA_LINEA = '\n',
+          SEPARADOR = ';';
+
+    const aArrays = function(datos, sepFila = NUEVA_LINEA, sepCampo = SEPARADOR) {
+      const filas = datos
+                    .split(sepFila)
+                    .filter(f => f.length > 0)
+                    .map(f => f.split(sepCampo))
+                    .filter(f => f.length === 5)
+                    .filter(f => {return f.every(c => c.length > 0)})
+                    .map(f => {return f.map(c => c.replace(/^\s+|\s+$/g, ''))});
+
+      return filas;
+    }
+
+    const aObjetos = function (array) {
+
+      const claves = array.shift();
+
+      const objetos = array
+                      .map(a => {
+                        return a.reduce((acc, v, pos) => {
+                          acc[claves[pos]] = v;
+                          return acc;
+                        }, {})
+                      });
+      return objetos;
+    }
+
+    const crearElemento = function (etiqueta, contenido){
+      const nodo = document.createElement(etiqueta);
+
+      if (typeof contenido === 'string'){
+        const nodoTxt = document.createTextNode(contenido);
+        nodo.appendChild(nodoTxt);
+      } else if (typeof contenido === 'object'){
+        nodo.appendChild(contenido);
+      }
+      return nodo;
+    }
+
+
+    const aTablaHTML = function(objetos, padre = document.querySelector('main'), caption="Camisetas"){
+
+      const cap = crearElemento('caption', caption);
+      let tabla = crearElemento('table', cap);
+      padre.appendChild(tabla);
+      const claves = Object.keys(objetos[0]);
+
+      const tbody = crearElemento('tbody');
+      tabla.appendChild(tbody);
+
+      let cami = 0;
+
+      for (let fila = 0; fila < 3; fila++){
+
+          let tr = crearElemento('tr');
+          tbody.appendChild(tr);
+
+          for(let clave = 0; clave < 4; clave++){
+
+              let td = crearElemento('td', fila[clave]);
+              tr.appendChild(td);
+              let div = crearElemento('div');
+              td.appendChild(div);
+              let img = crearElemento('img');
+              img.src = "img/"+objetos[cami].color+".png";
+              img.alt = "imagen "+(cami+1);
+              div.appendChild(img);
+              let div2 = crearElemento('div');
+              td.appendChild(div2);
+              let p = crearElemento('p', objetos[cami].nombre);
+              div2.appendChild(p);
+              //let span = crearElemento('span', objetos[cami].desc);
+              //span.className = "desaparece";
+
+              //p.addEventListener('mouseover', function(){span.classList.remove('desaparece');}, false);
+              //p.addEventListener('mouseout', function(){span.classList.add('desaparece');}, false);
+
+              let desc = objetos[cami].desc;
+
+
+              p.addEventListener('mouseover', function(e){
+
+                // crearPopup
+                let p2 = crearElemento('p', desc);
+                document.body.appendChild(p2);
+                p2.id = "popup";
+                p2.style.top = (e.pageY - 10) + "px";
+                p2.style.left = (e.pageX + 15) + "px";
+              });
+
+              p.addEventListener('mouseout', function(e){
+
+                // destruirPopup
+                let p2 = document.getElementById('popup');
+                p2.parentNode.removeChild(p2);
+              });
+
+              p.addEventListener('mousemove', function(e){
+
+                // moverPopup
+                let p2 = document.getElementById('popup');
+                p2.style.top = (e.pageY - 10) + "px";
+                p2.style.left = (e.pageX + 15) + "px";
+              });
+
+              //p.appendChild(span);
+              let p2 = crearElemento('p', objetos[cami].precio);
+              div2.appendChild(p2);
+
+
+              cami++;
+          }
+      }
+
+      let tabla2 = crearElemento('table');
+      padre.appendChild(tabla2);
+      let tr2 = crearElemento('tr');
+      tabla2.appendChild(tr2);
+      let td2 = crearElemento('td', '↑');
+      tr2.appendChild(td2);
+      td2.addEventListener('click', ordenAscendiente, false);
+      let td3 = crearElemento('td', '↓');
+      td3.addEventListener('click', ordenDescendiente, false);
+      tr2.appendChild(td3);
+
+
+    }
+
+    ordenAscendiente = function(){
+
+      objetos.sort((a,b) => (parseFloat(b.precio) - parseFloat(a.precio)));
+      aTablaHTML(objetos);
+
+      /*  let ordenados = Object.keys(objetos)
+                        .sort((a,b) => objetos[b]["precio"] - objetos[a]["precio"])
+                        .reduce((a,v) => {
+                          a[v] = objetos[v];
+                          return a;
+                        },{});
+      */
+    }
+
+    ordenDescendiente = function(objetos){
+
+      objetos.sort((a,b) => (parseFloat(a.precio) - parseFloat(b.precio)));
+      aTablaHTML(objetos);
+
+      /*  let ordenados = Object.keys(objetos)
+                        .sort((a,b) => objetos[a]["precio"] - objetos[b]["precio"])
+                        .reduce((a,v) => {
+                          a[v] = objetos[v];
+                          return a;
+                        },{});
+      */
+    }
+
+
+    aTablaHTML(aObjetos(aArrays(camisetasCSV)));
+
+  </script>
+</body>
+</html>
